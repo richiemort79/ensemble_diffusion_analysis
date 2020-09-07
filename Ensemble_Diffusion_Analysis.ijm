@@ -6,6 +6,11 @@
 //The analysis uses the time ensemble average method described in Charsooghi, MA et al 2011
 //http://www.sciencedirect.com/science/article/pii/S0010465510003620
 
+
+//claibration
+timestep = 10; //time in minutes between frames
+cal = 0.619; //um per pixel
+
 //Get number of tracks (nTracks)
 //get the track numbers in an array to use as the index
 track_number = list_no_repeats ("Results", "Track");
@@ -107,14 +112,14 @@ for (i=0; i<nResults(); i++){
 	disx2 = (B9-B8)*(B9-B8);
 	disy2 = (C9-C8)*(C9-C8);
 	dis2 = (disx2 + disy2);
-	r_total = r_total+dis2;	
+	r_total = r_total+(dis2*cal);	
 	divide++;
 			}	
 		}
 	}
 }
 
-time = Array.concat(time, u);	
+time = Array.concat(time, u * timestep);	
 MSD = Array.concat(MSD, (r_total)/divide);
 r_total=0;
 divide=0;
