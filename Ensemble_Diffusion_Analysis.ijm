@@ -7,14 +7,11 @@
 //http://www.sciencedirect.com/science/article/pii/S0010465510003620
 
 //Get number of tracks (nTracks)
-nTracks = 0;
-for (a=0; a<nResults(); a++) {
-    if (getResult("Track",a)>nTracks)
-    {
-     nTracks = getResult("Track",a);
-    	}
-    	else{};
-}
+//get the track numbers in an array to use as the index
+track_number = list_no_repeats ("Results", "Track");
+
+//get number of tracks (nTracks)
+nTracks = track_number.length;
 
 //Find the track length for each track - write track length to results table
 //some variables
@@ -22,44 +19,39 @@ Track=1;
 L_Track=0;
 
 //work though tracks and determine length
-for (i=0; i<nResults(); i++){
-	if (getResult("Track", i)==Track) {L_Track++;} else {
 
-//Do this if its the first track
-	if(Track==1){		for (j=(i-L_Track); j<i; j++){
-				setResult("T_Length", j, L_Track);			
-		}
-				L_Track=0;
-				Track++;
-				
-//Do this if its in the middle
-	L_Track=1;	
-	} else {for (j=(i-L_Track); j<i; j++){
-				setResult("T_Length", j, L_Track);
-		}
-				L_Track=1;
-				Track++;
+for (i=0; i<track_number.length; i++){
+//get the x, y values in an array
+	frames = newArray();
+	positions = newArray();
+	for (j=0; j<nResults; j++) {
+
+		if (getResultString("Track", j) == toString(track_number[i])){
+			frames = Array.concat(frames, getResult("Frame", j));
+			positions = Array.concat(positions, j);
 			}
 		}
-	}
-//Do this to get the last track
-	L_Track=0;
-	for (j=0; j<nResults; j++) {
-		if (getResult("Track", j)==nTracks) {L_Track++;}
-	}
+//write length back to the results table
+	Array.getStatistics(positions, min, max, mean, stdDev);
+	pmin = min;
+	pmax = max;
+	Array.getStatistics(frames, min, max, mean, stdDev);
+	fmin = min;
+	fmax = max;
 
-	for (k=0; k<nResults; k++) {
-		if (getResult("Track", k)==nTracks) {setResult("T_Length", k, L_Track);
+	for(z=pmin;z<=pmax;z++) {
+      	setResult("T_Length", z , positions.length);
+      }
+      updateResults();
+	
 	}
-}
-updateResults();
 
 //get last slice
 maxslice = 0;
 for (b=0; b<nResults(); b++) {
-    if (getResult("Slice",b)>maxslice)
+    if (getResult("Frame",b)>maxslice)
     {
-     maxslice = getResult("Slice",b);
+     maxslice = getResult("Frame",b);
     	}
     	else{};
 }
@@ -67,9 +59,9 @@ for (b=0; b<nResults(); b++) {
 //get first slice
 minslice = maxslice;
 for (c=0; c<nResults(); c++) {
-    if (getResult("Slice",c)<minslice)
+    if (getResult("Frame",c)<minslice)
     {
-     minslice = getResult("Slice",c);
+     minslice = getResult("Frame",c);
     	}
     	else{};
 }
@@ -86,7 +78,7 @@ dis2 = 0;
 for (u=1; u<(maxslice); u++) {
 
 for (i=0; i<nResults(); i++){
-	if (getResult("Slice", i)<=u) {}
+	if (getResult("Frame", i)<=u) {}
 	
 	else{ if (getResult("Track", i)>getResult("Track", i-u)) {}
 	
@@ -104,6 +96,7 @@ for (i=0; i<nResults(); i++){
 		}
 	}
 }
+
 time = Array.concat(time, u);	
 MSD = Array.concat(MSD, (r_total)/divide);
 r_total=0;
@@ -119,3 +112,34 @@ print("intercept = "+intercept);
 print("R^2 = "+r2);
 Fit.plot();
 
+function list_no_repeats (table, heading) {
+//Returns an array of the entries in a column without repeats to use as an index
+
+//Check whether the table exists
+	if (isOpen(table)) {
+
+//get the entries in the column without repeats
+		no_repeats = newArray(getResultString(heading, 0));
+
+		for (i=0; i<nResults; i++) {
+			occurence = getResultString(heading, i);
+			for (j=0; j<no_repeats.length; j++) {
+				if (occurence != no_repeats[j]) {
+					flag = 0;
+				} else {
+						flag = 1;
+					}
+				}
+			
+			if (flag == 0) {
+				occurence = getResultString(heading, i);
+				no_repeats = Array.concat(no_repeats, occurence);	
+			}
+		}
+	} else {
+		Dialog.createNonBlocking("Error");
+		Dialog.addMessage("No table with the title "+table+" found.");
+		Dialog.show();
+	}
+	return no_repeats;
+}
