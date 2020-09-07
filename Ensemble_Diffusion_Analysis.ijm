@@ -31,6 +31,7 @@ for (i=0; i<track_number.length; i++){
 			positions = Array.concat(positions, j);
 			}
 		}
+		
 //write length back to the results table
 	Array.getStatistics(positions, min, max, mean, stdDev);
 	pmin = min;
@@ -45,6 +46,22 @@ for (i=0; i<track_number.length; i++){
       updateResults();
 	
 	}
+
+//Index the tracks numerically will be the same as "Track" if strings are not used
+index = 1;
+
+for (l=0; l<nResults; l++) {
+	if (l==0) {
+		setResult("Index", l, index);
+	}
+	else if (getResultString("Track", l) == getResultString("Track",l-1)) {
+		setResult("Index", l, index);
+	}
+	else if (getResult("Track", l) != getResult("Track",l-1)) {
+		index = index+1;
+		setResult("Index", l, index);
+	}
+}
 
 //get last slice
 maxslice = 0;
@@ -80,9 +97,9 @@ for (u=1; u<(maxslice); u++) {
 for (i=0; i<nResults(); i++){
 	if (getResult("Frame", i)<=u) {}
 	
-	else{ if (getResult("Track", i)>getResult("Track", i-u)) {}
+	else{ if (getResult("Index", i)>getResult("Index", i-u)) {}
 	
-	else { if (getResult("T_Length", i)>=u && getResult("Track", i-u)==getResult("Track", i)) {
+	else { if (getResult("T_Length", i)>=u && getResult("Index", i-u)==getResult("Index", i)) {
 	B9 = getResult("X", i);
 	B8 = getResult("X", i-u);
 	C9 = getResult("Y", i);
