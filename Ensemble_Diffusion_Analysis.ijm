@@ -6,51 +6,15 @@
 //The analysis uses the time ensemble average method described in Charsooghi, MA et al 2011
 //http://www.sciencedirect.com/science/article/pii/S0010465510003620
 
-
 //claibration
 timestep = 10; //time in minutes between frames
 cal = 0.619; //um per pixel
 
-//Get number of tracks (nTracks)
 //get the track numbers in an array to use as the index
 track_number = list_no_repeats ("Results", "Track");
 
 //get number of tracks (nTracks)
 nTracks = track_number.length;
-
-//Find the track length for each track - write track length to results table
-//some variables
-Track=1;
-L_Track=0;
-
-//work though tracks and determine length
-
-for (i=0; i<track_number.length; i++){
-//get the x, y values in an array
-	frames = newArray();
-	positions = newArray();
-	for (j=0; j<nResults; j++) {
-
-		if (getResultString("Track", j) == toString(track_number[i])){
-			frames = Array.concat(frames, getResult("Frame", j));
-			positions = Array.concat(positions, j);
-			}
-		}
-		
-//write length back to the results table
-	Array.getStatistics(positions, min, max, mean, stdDev);
-	pmin = min;
-	pmax = max;
-	Array.getStatistics(frames, min, max, mean, stdDev);
-	fmin = min;
-	fmax = max;
-
-	for(z=pmin;z<=pmax;z++) {
-      	setResult("T_Length", z , positions.length);
-      }
-      updateResults();
-	
-	}
 
 //Index the tracks numerically will be the same as "Track" if strings are not used
 index = 1;
@@ -68,52 +32,38 @@ for (l=0; l<nResults; l++) {
 	}
 }
 
-//get last slice
-maxslice = 0;
-for (b=0; b<nResults(); b++) {
-    if (getResult("Frame",b)>maxslice)
-    {
-     maxslice = getResult("Frame",b);
-    	}
-    	else{};
-}
+//Workout the window size from the track lengths and write lengths to table
+lengths = get_track_lengths();
+Array.getStatistics(lengths, min, max, mean, stdDev);
 
-//get first slice
-minslice = maxslice;
-for (c=0; c<nResults(); c++) {
-    if (getResult("Frame",c)<minslice)
-    {
-     minslice = getResult("Frame",c);
-    	}
-    	else{};
-}
-
-//The window sizes for analysis range from 1-step to - maxslice-1
+//The window sizes for analysis range from 1 to max-1
 //Calculate squared dispalcement from tracking data for all possible window sizes 
 
 MSD = newArray();
 time = newArray();
-divide=0;
-r_total=0;
-dis2 = 0;
+divide = 0;
+r_total = 0;
+distance = 0;
 
-for (u=1; u<(maxslice); u++) {
+//Iterate through the different window sizes from 1 to maxslice
+for (u=1; u<max; u++) {
 
-for (i=0; i<nResults(); i++){
-	if (getResult("Frame", i)<=u) {}
+//For each window iterate through the results table
+	for (i=0; i<nResults(); i++){
+
+//If the frame number is less than or equal to the window size
+		if (getResult("Step", i) <= u) {}
 	
-	else{ if (getResult("Index", i)>getResult("Index", i-u)) {}
+		else { if (getResult("Index", i)>getResult("Index", i-u)) {}
 	
-	else { if (getResult("T_Length", i)>=u && getResult("Index", i-u)==getResult("Index", i)) {
-	B9 = getResult("X", i);
-	B8 = getResult("X", i-u);
-	C9 = getResult("Y", i);
-	C8 = getResult("Y", i-u);
-	disx2 = (B9-B8)*(B9-B8);
-	disy2 = (C9-C8)*(C9-C8);
-	dis2 = (disx2 + disy2);
-	r_total = r_total+(dis2*cal);	
-	divide++;
+		else { if (getResult("T_Length", i)>=u && getResult("Index", i-u)==getResult("Index", i)) {
+			x = getResult("X", i);
+			x1 = getResult("X", i-u);
+			y = getResult("Y", i);
+			y1 = getResult("Y", i-u);
+			distance = get_pythagoras(x, y, x1, y1, cal);
+			r_total = r_total+distance;	
+			divide++;
 			}	
 		}
 	}
@@ -164,4 +114,43 @@ function list_no_repeats (table, heading) {
 		Dialog.show();
 	}
 	return no_repeats;
+}
+
+
+function get_pythagoras(x, y, x1, y1, scale) {
+//get the distance between x,y and x1,y1 in the usual way use scale to convert to real world units
+	x2 = x - x1;
+	y2 = y - y1;
+    distance = (sqrt((x2*x2)+(y2*y2)))*scale;
+	return distance;
+}
+
+function get_track_lengths() {
+//get the track lengths in an and array write them to the table
+	track_number = list_no_repeats ("Results", "Track");
+
+//get track lengths in array and write to results
+	track_lengths = newArray();
+	for (a=0; a<track_number.length; a++){
+		t_le = 0;
+		for (i=0; i<nResults; i++) {
+			if (getResultString("Track",i) == toString(track_number[a])) {
+				t_le = t_le +1;
+			}
+		}
+		track_lengths = Array.concat(track_lengths, t_le);
+	}
+		
+		for (a=0; a<track_number.length; a++){
+			frame=0;
+		for (i=0; i<nResults; i++) {
+			if (getResultString("Track",i) == toString(track_number[a])) {
+				frame=frame+1;
+				setResult("T_Length", i, track_lengths[a]);
+				setResult("Step", i, frame);
+			}
+		}
+	}
+
+	return track_lengths;
 }
