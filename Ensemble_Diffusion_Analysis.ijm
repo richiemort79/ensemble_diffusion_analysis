@@ -62,7 +62,7 @@ for (u=1; u<max; u++) {
 			y = getResult("Y", i);
 			y1 = getResult("Y", i-u);
 			distance = get_pythagoras(x, y, x1, y1, cal);
-			r_total = r_total+distance;	
+			r_total = r_total+(distance*distance);	
 			divide++;
 			}	
 		}
