@@ -6,7 +6,7 @@
 //The analysis uses the time ensemble average method described in Charsooghi, MA et al 2011
 //http://www.sciencedirect.com/science/article/pii/S0010465510003620
 
-//claibration
+//calibration
 timestep = 10; //time in minutes between frames
 cal = 0.619; //um per pixel
 
@@ -75,14 +75,36 @@ r_total=0;
 divide=0;
 }
 
-Fit.doFit("Straight Line", time, MSD);
+//Trim the msd array to the max values before fitting
+arraymax = 0;
+msd2 = newArray();
+time2 = newArray();
+var done = false;
+for (i=1; i<MSD.length && !done; i++) {
+	if (MSD[i]>MSD[i-1])  {
+		msd2 = Array.concat(msd2, MSD[i]);
+		time2 = Array.concat(time2, time[i]);
+		
+	} else {
+		done = true;
+	}
+}
+
+Array.print(time2);
+Array.print(msd2);
+Fit.doFit("Straight Line", time2, msd2);
 intercept = d2s(Fit.p(0),6);
 slope = d2s(Fit.p(1),6);
 r2 = d2s(Fit.rSquared,3);
+//dc = (slope/4);
+
 print("slope = "+slope);
 print("intercept = "+intercept);
 print("R^2 = "+r2);
+//print("D = "+D);
+
 Fit.plot();
+Plot.setFrameSize(400, 400);
 
 function list_no_repeats (table, heading) {
 //Returns an array of the entries in a column without repeats to use as an index
